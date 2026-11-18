@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Live Multi-Preview</title>
+  <style>
+    html {
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      background: #070709;
+    }
+    body {
+      overflow-x: hidden;
+      overflow-y: scroll;
+      margin: 0 0 20px;
+      background: #070709;
+    }
+    .match-dashboard-bg { background-color: <%= dbGet("nebula", "palette_dashboard_7") %> !important; }
+    .match-auth-bg { background-color: <%= dbGet("nebula", "palette_auth_1") %> !important; }
+    .focus { display: none; }
+    .auth-preview, .dash-preview {
+      margin: 20px 20px 0;
+      padding: 0;
+      height: calc(75vh - 30px);
+      min-height: 360px;
+      width: calc(100% - 40px);
+      overflow: hidden !important;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+    }
+    *::-webkit-scrollbar { display: none; }
+    * { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body id="body">
+  <iframe
+    title="Dashboard Preview"
+    class="dash-preview match-dashboard-bg"
+    id="dashPreview"
+    src="/preview/panel">
+  </iframe>
+  <iframe
+    title="Authentication Preview"
+    class="auth-preview match-auth-bg"
+    id="authPreview"
+    src="/extensions/nebula/preview/auth.php">
+  </iframe>
+  <a class="focus" id="focus-dash" href="#body"></a>
+  <a class="focus" id="focus-auth" href="#authPreview"></a>
+</body>
+</html>

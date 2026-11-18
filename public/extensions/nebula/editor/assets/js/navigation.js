@@ -17,7 +17,7 @@ function navigationAction(page) {
         element("button[to='admin']").innerHTML = SPINNER;
       }
       if(params.get('source') == "panel") {
-        window.location = "/";
+        window.location = "/panel";
       } else {
         window.location = "/admin/extensions";
       }
@@ -42,10 +42,10 @@ function notify(elem) {
   let Hitbox = element(elem+"> .notif-hitbox")
 
   Parent.style.display = "block"
-  if(elem == "#notify-unsaved") { Hitbox.onclick = (() => {if(forceNav != true) { cachedPage=null; }; closeNotify('#notif-unsaved')}); }
+  if(elem == "#notif-unsaved") { Hitbox.onclick = (() => {if(forceNav != true) { cachedPage=null; }; closeNotify('#notif-unsaved')}); }
   else { Hitbox.onclick = (() => {closeNotify(`${elem}`)}) }
   if(element(elem+"> .notif-container > .button-close") != undefined) {
-    if(elem == "#notify-unsaved") { element(elem+"> .notif-container > .button-close").onclick = (() => {if(forceNav != true) { cachedPage=null; }; closeNotify('#notif-unsaved')}); }
+    if(elem == "#notif-unsaved") { element(elem+"> .notif-container > .button-close").onclick = (() => {if(forceNav != true) { cachedPage=null; }; closeNotify('#notif-unsaved')}); }
     else { element(elem+"> .notif-container > .button-close").onclick = (() => {closeNotify(`${elem}`)}) }
   }
   setTimeout(() => {

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Blueprint Extensions · HelzerX 3D</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="/extensions/nebula/editor/assets/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.nebula.style/icons/bootstrap/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/extensions/nebula/libraries/helzerx3d.css">
+  <style>
+    :root {
+      --pagePrimary: <%= dbGet("nebula", "palette_dashboard_1") %>;
+      --pagePrimaryHover: <%= dbGet("nebula", "palette_dashboard_2") %>;
+      --pageSecondary: <%= dbGet("nebula", "palette_dashboard_3") %>;
+      --pageBackground: <%= dbGet("nebula", "palette_dashboard_7") %>;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 65% 45% at 85% 5%, rgba(245, 176, 65, 0.08), transparent 60%),
+        radial-gradient(ellipse 55% 40% at 10% 90%, rgba(165, 105, 189, 0.07), transparent 60%),
+        var(--pageBackground);
+      color: #f5f5f7;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      padding: 40px 24px;
+    }
+    .shell {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+    .header p {
+      margin: 6px 0 0;
+      color: #8e8e99;
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .card-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      color: #f5b041;
+      background: rgba(245, 176, 65, 0.12);
+      border: 1px solid rgba(245, 176, 65, 0.25);
+    }
+    .card-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .card-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #8e8e99;
+      margin-top: 2px;
+    }
+    .card-desc {
+      margin: 0;
+      color: #a0a0ad;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #f5f5f7;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <div>
+        <h1>Blueprint Extensions</h1>
+        <p>Manage installed theme extensions and inspect live Pterodactyl Panel surfaces.</p>
+      </div>
+      <a href="/panel" class="btn hx-btn-3d">
+        <i class="bi bi-arrow-left"></i>
+        <span>Client Panel</span>
+      </a>
+    </div>
+
+    <div class="grid">
+      <div class="card hx-3d-card">
+        <div>
+          <div class="card-top">
+            <div class="card-icon"><i class="bi bi-exclude"></i></div>
+            <div>
+              <h2 class="card-title">HelzerX 3D Designer</h2>
+              <div class="card-meta">nebula · v2.0-1</div>
+            </div>
+          </div>
+          <p class="card-desc" style="margin-top:16px;">Configure Obsidian Gold 3D cards, cursor spotlighting, palette tokens, sidebar layout, and authentication design.</p>
+        </div>
+        <a href="/extensions/nebula/editor/editor.php" class="btn hx-btn-3d hx-btn-3d-gold">
+          <i class="bi bi-sliders2"></i>
+          <span>Open Theme Designer</span>
+        </a>
+      </div>
+
+      <div class="card hx-3d-card">
+        <div>
+          <div class="card-top">
+            <div class="card-icon"><i class="bi bi-display"></i></div>
+            <div>
+              <h2 class="card-title">Pterodactyl Client Panel</h2>
+              <div class="card-meta">/panel · Live Theme View</div>
+            </div>
+          </div>
+          <p class="card-desc" style="margin-top:16px;">Inspect the themed server list, 3D hover plinth cards, sidebar icon pack, power controls, and node telemetry.</p>
+        </div>
+        <a href="/panel" class="btn hx-btn-3d">
+          <i class="bi bi-box-arrow-up-right"></i>
+          <span>Launch Client Panel</span>
+        </a>
+      </div>
+
+      <div class="card hx-3d-card">
+        <div>
+          <div class="card-top">
+            <div class="card-icon"><i class="bi bi-filetype-css"></i></div>
+            <div>
+              <h2 class="card-title">Compiled Theme Stylesheet</h2>
+              <div class="card-meta">/extensions/nebula/theme.css</div>
+            </div>
+          </div>
+          <p class="card-desc" style="margin-top:16px;">Export the generated CSS variables combined with HelzerX 3D styles for production Pterodactyl deployment.</p>
+        </div>
+        <a href="/extensions/nebula/theme.css" target="_blank" class="btn hx-btn-3d">
+          <i class="bi bi-download"></i>
+          <span>View theme.css</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <script src="/extensions/nebula/libraries/helzerx3d.js"></script>
+</body>
+</html>

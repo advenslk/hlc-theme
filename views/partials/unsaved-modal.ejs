@@ -1,0 +1,13 @@
+<div id="notif-unsaved" class="notif">
+  <div class="notif-hitbox"></div>
+  <div class="notif-container">
+    <h2 class="notif-title">
+      <i class="bi bi-exclamation-triangle-fill" style="margin-right: 4px;"></i>
+      Unsaved changes!
+    </h2>
+    <p class="notif-text">You made changes that haven't been saved yet, do you want to save them?</p>
+    <button class="notif-button notif-primary" id="unsaved-save" onclick="saveUnsaved()" type="button">Save</button>
+    <button class="notif-button" id="unsaved-discard" onclick="discardUnsaved()" type="button">Discard</button>
+    <button class="button-close notif-button align-right" id="unsaved-cancel" type="button">Cancel</button>
+  </div>
+</div>

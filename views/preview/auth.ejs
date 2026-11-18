@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" <% if (dbGet('nebula', 'auth_background_magic') !== '') { %>class="magic-pattern[<%= dbGet('nebula', 'auth_background_magic') %>]" view="auth"<% } %>>
+<head>
+  <meta charset="utf-8">
+  <title>Authentication Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/extensions/nebula/libraries/authWatermark.css">
+  <link rel="stylesheet" href="/extensions/nebula/libraries/patterns.css">
+  <style>
+    :root {
+      --authA: <%= dbGet("nebula", "palette_auth_1") %>;
+      --authB: <%= dbGet("nebula", "palette_auth_2") %>;
+      --authC: <%= dbGet("nebula", "palette_auth_3") %>;
+      --authD: <%= dbGet("nebula", "palette_auth_4") %>;
+      --authE: <%= dbGet("nebula", "palette_auth_5") %>;
+      --authF: <%= dbGet("nebula", "palette_auth_6") %>;
+      --authG: <%= dbGet("nebula", "palette_auth_7") %>;
+      --authH: <%= dbGet("nebula", "palette_auth_8") %>;
+      --patternSizeAuth: <%= dbGet("nebula", "auth_background_magicsize") %>px;
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: background-color 0.35s ease, border-color 0.35s ease;
+    }
+
+    html {
+      <% if (dbGet("nebula", "auth_background_image") === "" && dbGet("nebula", "auth_background_magic") === "") { %>
+      background:
+        radial-gradient(ellipse 65% 45% at 80% 10%, rgba(245, 176, 65, 0.14), transparent 60%),
+        radial-gradient(ellipse 60% 45% at 10% 90%, rgba(165, 105, 189, 0.14), transparent 60%),
+        var(--authA);
+      <% } else if (dbGet("nebula", "auth_background_image") !== "") { %>
+      background: url('<%= dbGet("nebula", "auth_background_image") %>') no-repeat center / cover;
+      <% } %>
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      <% if (dbGet("nebula", "auth_background_appearance") === "1") { %>backdrop-filter: blur(50px);<% } %>
+      <% if (dbGet("nebula", "auth_background_appearance") === "2") { %>backdrop-filter: brightness(60%);<% } %>
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      color: #f5f5f7;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .auth-card {
+      position: relative;
+      width: min(100%, 420px);
+      padding: 34px 32px 28px;
+      border-radius: 18px;
+      background:
+        radial-gradient(ellipse at 90% 0%, rgba(245, 176, 65, 0.12), transparent 55%),
+        var(--authB);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow:
+        0 12px 0 0 rgba(4, 4, 8, 0.96),
+        0 34px 72px rgba(0, 0, 0, 0.9),
+        inset 0 1.5px 0 rgba(255, 255, 255, 0.22);
+      transform: perspective(950px) translateZ(0);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .auth-card:hover {
+      transform: perspective(950px) translateY(-4px) translateZ(12px);
+    }
+
+    .title {
+      margin: 0 0 22px;
+      text-align: center;
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+
+    <% if (dbGet("nebula", "auth_customlogo") !== "") { %>
+    .title {
+      content: url("<%= dbGet("nebula", "auth_customlogo") %>");
+      border-radius: 10px;
+      height: 58px;
+      margin: 0 auto 22px;
+      display: block;
+    }
+    <% } %>
+
+    .field-label {
+      margin: 0 0 7px;
+      color: var(--authG);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .input-box {
+      background-color: var(--authC);
+      width: 100%;
+      height: 46px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-bottom: 3px var(--authD) solid;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      color: #f5f5f7;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      opacity: 0.9;
+    }
+
+    .input-btn {
+      background: linear-gradient(180deg, var(--authF) 0%, color-mix(in hsl, var(--authF) 78%, black) 100%);
+      color: var(--authH);
+      border: none;
+      width: 100%;
+      height: 48px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      box-shadow:
+        0 4px 0 0 color-mix(in hsl, var(--authF) 50%, black),
+        0 12px 24px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .input-btn:active {
+      transform: translateY(2px);
+    }
+
+    .link-center {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      margin: 20px 0 0;
+      color: var(--authG);
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <h2 class="title">Login to Continue</h2>
+    <p class="field-label">Username or Email</p>
+    <div class="input-box">operator@helzerx.net</div>
+    <p class="field-label">Password</p>
+    <div class="input-box">••••••••••••</div>
+    <button class="input-btn" type="button">Sign In</button>
+    <p class="link-center">Forgot Password?</p>
+  </div>
+
+  <% if (dbGet("nebula", "watermark_auth") !== "0") { %>
+    <div class="nebula-watermark">Powered by <b class="watermark-highlight"><i class="bi bi-exclude"></i> HelzerX 3D</b></div>
+  <% } %>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #070709;">
+<head>
+  <meta charset="utf-8">
+  <title>HelzerX 3D Designer Overview</title>
+  <link rel="stylesheet" href="https://cdn.nebula.style/icons/bootstrap/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/extensions/nebula/libraries/helzerx3d.css">
+  <style>
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 85% 15%, rgba(245, 176, 65, 0.1), transparent 60%),
+        radial-gradient(ellipse 60% 45% at 15% 85%, rgba(165, 105, 189, 0.08), transparent 60%),
+        #070709;
+      color: #f5f5f7;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .overview-wrap {
+      width: min(90%, 440px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .overview-card {
+      padding: 28px;
+      text-align: center;
+    }
+
+    .brand-mark {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 24px;
+      color: #070709;
+      background: linear-gradient(180deg, #f8c468 0%, #e59836 100%);
+      box-shadow: 0 6px 0 0 rgba(146, 90, 18, 0.9), 0 18px 36px rgba(245, 176, 65, 0.28), inset 0 1px 0 rgba(255, 245, 220, 0.9);
+    }
+
+    .overview-title {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .overview-version {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #f5b041;
+      letter-spacing: 0.04em;
+    }
+
+    .overview-copy {
+      margin: 14px 0 22px;
+      color: #8e8e99;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .overview-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .overview-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #f5f5f7;
+    }
+  </style>
+</head>
+<body>
+  <div class="overview-wrap">
+    <div class="overview-card hx-3d-card">
+      <div class="brand-mark">H</div>
+      <h1 class="overview-title">HelzerX 3D Designer</h1>
+      <span class="overview-version">Nebula v2.0-1 · Obsidian Gold 3D</span>
+      <p class="overview-copy">
+        Customize palette tokens, 3D plinth card depth, cursor spotlight intensity, icon themes, and authentication layouts in real time.
+      </p>
+      <div class="overview-actions">
+        <a href="/panel" target="_top" class="overview-btn hx-btn-3d hx-btn-3d-gold">
+          <i class="bi bi-display"></i>
+          <span>Client Panel</span>
+        </a>
+        <a href="/extensions/nebula/theme.css" target="_blank" class="overview-btn hx-btn-3d">
+          <i class="bi bi-filetype-css"></i>
+          <span>Theme CSS</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <script src="/extensions/nebula/libraries/helzerx3d.js"></script>
+</body>
+</html>

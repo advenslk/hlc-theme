@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HelzerX · Server Control Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="/extensions/nebula/editor/assets/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.nebula.style/icons/bootstrap/bootstrap-icons.css">
+  <% if (iconPack.cssUrl && cfg.icon_fallback !== 'bootstrap') { %>
+    <link rel="stylesheet" href="<%= iconPack.cssUrl %>">
+  <% } %>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/extensions/nebula/libraries/patterns.css">
+  <% if (cfg.hx_3d_depth === '1') { %>
+    <link rel="stylesheet" href="/extensions/nebula/libraries/helzerx3d.css">
+  <% } %>
+  <% if (cfg.alert === '1') { %>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <% } %>
+  <style id="nebula-variables">
+    :root {
+      --sidebarPrimary: <%= cfg.palette_sidebar_1 %>;
+      --sidebarPrimaryHover: <%= cfg.palette_sidebar_2 %>;
+      --sidebarSecondary: <%= cfg.palette_sidebar_3 %>;
+      --sidebarSecondaryHover: <%= cfg.palette_sidebar_4 %>;
+      --sidebarSecondaryActive: <%= cfg.palette_sidebar_5 %>;
+      --sidebarSecondarySelected: <%= cfg.palette_sidebar_6 %>;
+      --sidebarButtonActive: <%= cfg.palette_sidebar_8 %>;
+
+      --pagePrimary: <%= cfg.palette_dashboard_1 %>;
+      --pagePrimaryHover: <%= cfg.palette_dashboard_2 %>;
+      --pageSecondary: <%= cfg.palette_dashboard_3 %><%= transparencyAlpha %>;
+      --pageSecondaryHover: <%= cfg.palette_dashboard_4 %><%= transparencyAlpha %>;
+      --pageSecondaryActive: <%= cfg.palette_dashboard_5 %><%= transparencyAlpha %>;
+      --pageSecondarySelected: <%= cfg.palette_dashboard_6 %><%= transparencyAlpha %>;
+      --pageButtonDefault: <%= cfg.palette_dashboard_8 %>;
+      --pageButtonHover: <%= cfg.palette_dashboard_9 %>;
+
+      --statusOffline: <%= cfg.palette_status_offline %>;
+      --statusError: <%= cfg.palette_status_error %>;
+      --statusStarting: <%= cfg.palette_status_starting %>;
+      --statusOnline: <%= cfg.palette_status_online %>;
+
+      --sidebarBackground: <%= cfg.palette_sidebar_7 %>;
+      --pageBackground: <%= cfg.palette_dashboard_7 %>;
+
+      --borderRadius: <%= cfg.border_radius %>px;
+      --borderRadiusSidebar: <%= cfg.sidebar_border_radius %>px;
+      --patternSizeDashboard: <%= cfg.background_magicsize %>px;
+
+      --sidebarWidth: <%= cfg.sidebar_full === '1' ? '220px' : '74px' %>;
+    }
+  </style>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background-color: var(--pageBackground);
+      color: var(--pagePrimary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    <% if (cfg.animations === 'fadeup') { %>
+    @keyframes hxEnter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    <% } else if (cfg.animations === 'zoomout') { %>
+    @keyframes hxEnter { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: scale(1); } }
+    <% } else if (cfg.animations === 'fadein') { %>
+    @keyframes hxEnter { from { opacity: 0; } to { opacity: 1; } }
+    <% } else { %>
+    @keyframes hxEnter { from { opacity: 1; } to { opacity: 1; } }
+    <% } %>
+
+    .hx-animate {
+      animation: hxEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* Fixed Backdrop Layer */
+    .panel-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      <% if (cfg.background_image !== '') { %>
+      background: url('<%= cfg.background_image %>') center / cover no-repeat;
+      <% } else if (cfg.background_magic === '') { %>
+      background:
+        radial-gradient(ellipse 68% 46% at 86% 6%, color-mix(in srgb, var(--pagePrimaryHover) 11%, transparent), transparent 62%),
+        radial-gradient(ellipse 56% 42% at 14% 92%, rgba(165, 105, 189, 0.08), transparent 62%),
+        var(--pageBackground);
+      <% } %>
+    }
+    .panel-backdrop-filter {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      <% if (cfg.background_image !== '' && cfg.background_appearance === '1') { %>
+      backdrop-filter: blur(28px);
+      background: rgba(7, 7, 9, 0.45);
+      <% } else if (cfg.background_image !== '' && cfg.background_appearance === '2') { %>
+      background: rgba(7, 7, 9, 0.62);
+      <% } %>
+    }
+
+    /* Sidebar */
+    .hx-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: var(--sidebarWidth);
+      z-index: 30;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      <% if (cfg.sidebar_background === 'blurred') { %>
+      background: linear-gradient(180deg, color-mix(in hsl, var(--sidebarBackground) 78%, transparent) 0%, color-mix(in hsl, var(--sidebarBackground) 52%, transparent) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      <% } else { %>
+      background-color: var(--sidebarBackground);
+      border-radius: 0 var(--borderRadiusSidebar) var(--borderRadiusSidebar) 0;
+      <% } %>
+      border-right: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .hx-sidebar-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hx-sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px 10px;
+      text-decoration: none;
+      color: var(--sidebarPrimary);
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+    }
+    .hx-sidebar-logo img {
+      max-height: 32px;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+
+    .hx-side-sep {
+      height: 1px;
+      margin: 6px 8px;
+      background: rgba(255, 255, 255, 0.08);
+      display: <%= cfg.sidebar_separators === '1' ? 'block' : 'none' %>;
+    }
+
+    .hx-side-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: <%= cfg.sidebar_full === '1' ? 'flex-start' : 'center' %>;
+      gap: 12px;
+      width: 100%;
+      height: 46px;
+      padding: <%= cfg.sidebar_full === '1' ? '0 14px' : '0' %>;
+      border-radius: var(--borderRadiusSidebar);
+      background-color: var(--sidebarSecondary);
+      color: var(--sidebarPrimary);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    <% if (cfg.sidebar_full === '1' && cfg.sidebar_buttonstyle === '1') { %>
+    .hx-side-btn { background: transparent; border: none; border-left: 3px solid transparent; border-radius: 4px; }
+    .hx-side-btn.is-active { border-left-color: var(--sidebarButtonActive); background: rgba(255, 255, 255, 0.05); }
+    <% } else if (cfg.sidebar_full === '1' && cfg.sidebar_buttonstyle === '2') { %>
+    .hx-side-btn { background: transparent; border: 1px solid rgba(255, 255, 255, 0.12); }
+    .hx-side-btn.is-active { border-color: var(--sidebarButtonActive); }
+    <% } %>
+
+    .hx-side-btn:hover {
+      background-color: var(--sidebarSecondaryHover);
+      color: var(--sidebarPrimaryHover);
+      border-color: rgba(255, 255, 255, 0.16);
+      <% if (cfg.sidebar_hover === 'popout') { %>transform: translateX(4px);<% } %>
+      <% if (cfg.sidebar_hover === 'expand') { %>transform: scale(1.05);<% } %>
+    }
+
+    .hx-side-btn.is-active {
+      background-color: var(--sidebarSecondaryActive);
+      color: var(--sidebarButtonActive);
+      border-color: color-mix(in srgb, var(--sidebarButtonActive) 45%, transparent);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+
+    .hx-side-btn i {
+      font-size: calc(<%= iconPack.scale %> * 0.56 * <%= cfg.icon_scale %>);
+      line-height: 1;
+    }
+
+    .hx-side-btn img.custom-icon {
+      width: calc(24px * <%= cfg.icon_scale %>);
+      height: calc(24px * <%= cfg.icon_scale %>);
+      object-fit: contain;
+    }
+
+    <% if (cfg.sidebar_full === '0' && cfg.sidebar_hover_tooltip !== '0') { %>
+    .hx-side-btn::after {
+      content: attr(data-label);
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%) translateX(-4px);
+      padding: 6px 11px;
+      border-radius: 9px;
+      background: #14141c;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #f5f5f7;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.75);
+      z-index: 60;
+    }
+    .hx-side-btn:hover::after {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+    <% } %>
+
+    /* Main Content */
+    .hx-main {
+      position: relative;
+      z-index: 2;
+      margin-left: var(--sidebarWidth);
+      min-height: 100vh;
+      padding: 28px 34px 48px;
+      max-width: calc(1360px + var(--sidebarWidth));
+    }
+
+    /* Alert Banner */
+    .hx-alert-banner {
+      <% if (cfg.alert_position === 'sticky') { %>position: sticky; top: 14px; z-index: 25;<% } %>
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 18px;
+      margin-bottom: 22px;
+      border-radius: var(--borderRadius);
+      background: linear-gradient(160deg, var(--pageSecondaryHover), var(--pageSecondary));
+      border: 1px solid color-mix(in srgb, var(--pagePrimaryHover) 35%, rgba(255,255,255,0.1));
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      font-size: 13.5px;
+    }
+
+    /* Top Header & Weblinks */
+    .hx-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+
+    .hx-page-title {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--pagePrimary);
+    }
+
+    .hx-page-sub {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: color-mix(in srgb, var(--pagePrimary) 60%, transparent);
+    }
+
+    .hx-weblinks {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      <%= cfg.website_links_align === '1' ? 'margin-left: auto;' : '' %>
+    }
+
+    .hx-weblink-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 14px;
+      border-radius: var(--borderRadius);
+      background-color: var(--pageButtonDefault);
+      color: var(--pagePrimary);
+      text-decoration: none;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+    }
+    .hx-weblink-btn:hover {
+      background-color: var(--pageButtonHover);
+      transform: translateY(-2px);
+    }
+    .hx-weblink-btn.accent {
+      background: linear-gradient(180deg, var(--pagePrimaryHover), color-mix(in srgb, var(--pagePrimaryHover) 75%, black));
+      color: #070709;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    /* Summary Telemetry Strip */
+    .hx-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .hx-stat-card {
+      padding: 18px 20px;
+      border-radius: var(--borderRadius);
+      background-color: var(--pageSecondary);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .hx-stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: color-mix(in srgb, var(--pagePrimary) 55%, transparent);
+      margin-bottom: 8px;
+    }
+
+    .hx-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pagePrimary);
+    }
+
+    /* Server Grid vs List */
+    .hx-server-grid {
+      display: grid;
+      <% if (cfg.server_list === 'list') { %>
+      grid-template-columns: 1fr;
+      gap: 10px;
+      <% } else { %>
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px;
+      <% } %>
+    }
+
+    .hx-server-card {
+      position: relative;
+      display: flex;
+      <% if (cfg.server_list === 'list') { %>
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      <% } else { %>
+      flex-direction: column;
+      gap: 16px;
+      padding: 22px;
+      <% } %>
+      border-radius: var(--borderRadius);
+      background-color: var(--pageSecondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, background-color 0.25s ease;
+    }
+
+    .hx-server-card:hover {
+      background-color: var(--pageSecondaryHover);
+      border-color: color-mix(in srgb, var(--pagePrimaryHover) 50%, rgba(255,255,255,0.14));
+    }
+
+    .hx-status-strip {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--srv-status);
+      <% if (cfg.statusgradient_style === 'default') { %>
+      box-shadow: 0 0 22px var(--srv-status);
+      <% } %>
+    }
+
+    .hx-srv-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-left: 8px;
+    }
+
+    .hx-srv-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .hx-srv-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: calc(var(--borderRadius) * 0.72);
+      display: grid;
+      place-items: center;
+      background-color: var(--pageSecondaryActive);
+      color: var(--pagePrimaryHover);
+      font-size: 17px;
+      flex: 0 0 auto;
+    }
+
+    .hx-srv-name {
+      margin: 0;
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--pagePrimary);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hx-srv-node {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: color-mix(in srgb, var(--pagePrimary) 55%, transparent);
+    }
+
+    .hx-srv-state {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--srv-status);
+    }
+
+    .hx-srv-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding-left: 8px;
+    }
+
+    .hx-metric {
+      padding: 10px 12px;
+      border-radius: calc(var(--borderRadius) * 0.68);
+      background-color: var(--pageSecondaryActive);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .hx-metric-k {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: color-mix(in srgb, var(--pagePrimary) 52%, transparent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .hx-metric-v {
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pagePrimary);
+    }
+
+    .hx-srv-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: color-mix(in srgb, var(--pagePrimary) 62%, transparent);
+    }
+
+    /* Server Console View */
+    .hx-console-view {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .hx-console-view.is-visible { display: flex; }
+    .hx-list-view.is-hidden { display: none; }
+
+    .hx-console-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 18px 22px;
+      border-radius: var(--borderRadius);
+      background-color: var(--pageSecondary);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .hx-power-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .hx-power-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 16px;
+      border-radius: calc(var(--borderRadius) * 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      <% if (cfg.hx_bevel_buttons === '1') { %>
+      box-shadow: 0 4px 0 0 rgba(5, 6, 10, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), filter 0.16s ease;
+      <% } %>
+    }
+    .hx-power-btn:active { transform: translateY(2px); }
+
+    <% if (cfg.server_colored_power === '1') { %>
+    .hx-power-btn.start { background: var(--statusOnline); color: #070709; }
+    .hx-power-btn.restart { background: var(--statusStarting); color: #070709; }
+    .hx-power-btn.stop { background: var(--statusError); color: #ffffff; }
+    <% } else { %>
+    .hx-power-btn { background: var(--pageButtonDefault); }
+    .hx-power-btn:hover { background: var(--pageButtonHover); }
+    <% } %>
+
+    .hx-terminal-box {
+      padding: 18px 20px;
+      border-radius: var(--borderRadius);
+      background: #0a0a0e;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: #d4d4de;
+    }
+
+    .hx-terminal-log {
+      max-height: 230px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .hx-terminal-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 12px;
+    }
+
+    .hx-terminal-input {
+      flex: 1;
+      background: #14141c;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #f5f5f7;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      outline: none;
+    }
+    .hx-terminal-input:focus {
+      border-color: var(--pagePrimaryHover);
+    }
+
+    .hx-graphs-grid {
+      display: <%= cfg.server_overview_graphs === '1' ? 'grid' : 'none' %>;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .hx-graph-card {
+      padding: 18px 20px;
+      border-radius: var(--borderRadius);
+      background-color: var(--pageSecondary);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .hx-footer {
+      margin-top: 34px;
+      text-align: center;
+      font-size: 12px;
+      color: color-mix(in srgb, var(--pagePrimary) 45%, transparent);
+    }
+
+    @media (max-width: 900px) {
+      .hx-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hx-graphs-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .hx-main { padding: 20px 16px 36px; }
+      .hx-server-card { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="panel-backdrop <%= cfg.background_magic !== '' ? 'magic-pattern[' + cfg.background_magic + ']' : '' %>" view="dashboard"></div>
+  <div class="panel-backdrop-filter"></div>
+
+  <!-- Sidebar -->
+  <aside class="hx-sidebar">
+    <div class="hx-sidebar-group">
+      <% if (cfg.sidebar_full === '1' && cfg.sidebar_customlogo !== '') { %>
+        <a href="/panel" class="hx-sidebar-logo">
+          <img src="<%= cfg.sidebar_customlogo %>" alt="Logo">
+        </a>
+        <div class="hx-side-sep"></div>
+      <% } else if (cfg.sidebar_full === '1') { %>
+        <a href="/panel" class="hx-sidebar-logo">
+          <span style="display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#f8c468,#e59836);color:#070709;font-weight:800;">H</span>
+          <span>HELZERX</span>
+        </a>
+        <div class="hx-side-sep"></div>
+      <% } %>
+
+      <button type="button" class="hx-side-btn is-active" id="nav-home" data-label="Servers" onclick="showServerList()">
+        <% if (cfg.sidebar_home && cfg.sidebar_full === '0') { %>
+          <img class="custom-icon" src="<%= cfg.sidebar_home %>" alt="">
+        <% } else { %>
+          <i class="<%= iconPack.icons.home %>"></i>
+        <% } %>
+        <% if (cfg.sidebar_full === '1') { %><span>Servers</span><% } %>
+      </button>
+
+      <div class="hx-side-sep"></div>
+
+      <button type="button" class="hx-side-btn" id="nav-console" data-label="Terminal" onclick="openConsole(0)">
+        <% if (cfg.sidebar_server_terminal && cfg.sidebar_full === '0') { %>
+          <img class="custom-icon" src="<%= cfg.sidebar_server_terminal %>" alt="">
+        <% } else { %>
+          <i class="<%= iconPack.icons.serverTerminal %>"></i>
+        <% } %>
+        <% if (cfg.sidebar_full === '1') { %><span>Terminal</span><% } %>
+      </button>
+
+      <button type="button" class="hx-side-btn" data-label="Files" onclick="openConsole(0)">
+        <i class="<%= iconPack.icons.serverFiles %>"></i>
+        <% if (cfg.sidebar_full === '1') { %><span>Files</span><% } %>
+      </button>
+
+      <button type="button" class="hx-side-btn" data-label="Databases" onclick="openConsole(0)">
+        <i class="<%= iconPack.icons.serverDatabases %>"></i>
+        <% if (cfg.sidebar_full === '1') { %><span>Databases</span><% } %>
+      </button>
+
+      <button type="button" class="hx-side-btn" data-label="Schedules" onclick="openConsole(0)">
+        <i class="<%= iconPack.icons.serverSchedules %>"></i>
+        <% if (cfg.sidebar_full === '1') { %><span>Schedules</span><% } %>
+      </button>
+
+      <button type="button" class="hx-side-btn" data-label="Backups" onclick="openConsole(0)">
+        <i class="<%= iconPack.icons.serverBackups %>"></i>
+        <% if (cfg.sidebar_full === '1') { %><span>Backups</span><% } %>
+      </button>
+
+      <button type="button" class="hx-side-btn" data-label="Network" onclick="openConsole(0)">
+        <i class="<%= iconPack.icons.serverNetwork %>"></i>
+        <% if (cfg.sidebar_full === '1') { %><span>Network</span><% } %>
+      </button>
+    </div>
+
+    <div class="hx-sidebar-group">
+      <div class="hx-side-sep"></div>
+      <a href="/extensions/nebula/editor/edit/dashboard.php?source=panel" class="hx-side-btn" data-label="Theme Designer">
+        <% if (cfg.sidebar_admin && cfg.sidebar_full === '0') { %>
+          <img class="custom-icon" src="<%= cfg.sidebar_admin %>" alt="">
+        <% } else { %>
+          <i class="<%= iconPack.icons.admin %>"></i>
+        <% } %>
+        <% if (cfg.sidebar_full === '1') { %><span>Theme Designer</span><% } %>
+      </a>
+      <a href="/admin/extensions" class="hx-side-btn" data-label="Extensions">
+        <i class="<%= iconPack.icons.serverSettings %>"></i>
+        <% if (cfg.sidebar_full === '1') { %><span>Extensions</span><% } %>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main Workspace -->
+  <main class="hx-main hx-animate">
+    <% if (cfg.alert === '1' && cfg.alert_text.trim() !== '') { %>
+      <div class="hx-alert-banner" id="panel-alert">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <i class="bi bi-<%= cfg.alert_icon %>" style="color:var(--pagePrimaryHover);font-size:18px;"></i>
+          <div id="alert-markdown"><%= cfg.alert_text %></div>
+        </div>
+        <% if (cfg.alert_dismiss === '1') { %>
+          <button type="button" onclick="document.getElementById('panel-alert').remove()" style="background:none;border:none;color:var(--pagePrimary);cursor:pointer;font-size:16px;"><i class="bi bi-x-lg"></i></button>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="hx-topbar">
+      <div>
+        <h1 class="hx-page-title">Infrastructure Fleet</h1>
+        <p class="hx-page-sub">HelzerX Obsidian Gold · Active compute allocations</p>
+      </div>
+
+      <div class="hx-weblinks">
+        <% if (cfg.website_links === '1') { %>
+          <% if (cfg.weblink_support) { %>
+            <a href="<%= cfg.weblink_support %>" target="_blank" class="hx-weblink-btn"><i class="bi bi-life-preserver"></i><span>Support</span></a>
+          <% } %>
+          <% if (cfg.weblink_billing) { %>
+            <a href="<%= cfg.weblink_billing %>" target="_blank" class="hx-weblink-btn"><i class="bi bi-cash-coin"></i><span>Billing</span></a>
+          <% } %>
+          <% if (cfg.weblink_status) { %>
+            <a href="<%= cfg.weblink_status %>" target="_blank" class="hx-weblink-btn"><i class="bi bi-bar-chart-fill"></i><span>Status</span></a>
+          <% } %>
+        <% } %>
+        <a href="/extensions/nebula/editor/editor.php?source=panel" class="hx-weblink-btn accent" id="designer-shortcut">
+          <i class="bi bi-palette2"></i>
+          <span>Open Designer</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Telemetry Summary -->
+    <section class="hx-summary-grid">
+      <div class="hx-stat-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+        <div class="hx-stat-label">Active Nodes</div>
+        <div class="hx-stat-value">4 / 4</div>
+      </div>
+      <div class="hx-stat-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+        <div class="hx-stat-label">Allocated Memory</div>
+        <div class="hx-stat-value">48.0 GB</div>
+      </div>
+      <div class="hx-stat-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+        <div class="hx-stat-label">Aggregate CPU</div>
+        <div class="hx-stat-value">31.4%</div>
+      </div>
+      <div class="hx-stat-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+        <div class="hx-stat-label">NVMe Storage</div>
+        <div class="hx-stat-value">184 GB</div>
+      </div>
+    </section>
+
+    <!-- Server List View -->
+    <section class="hx-list-view" id="server-list-view">
+      <div class="hx-server-grid">
+        <% const servers = [
+          {
+            name: 'HelzerX Velocity Proxy',
+            node: 'FRA-DE-01 · Frankfurt',
+            addr: '185.217.92.14:25565',
+            cpu: '18.4% / 400%',
+            mem: '6.2 / 16 GB',
+            disk: '28 / 120 GB',
+            state: 'Running',
+            colorVar: 'var(--statusOnline)',
+            icon: 'bi-hdd-stack-fill'
+          },
+          {
+            name: 'HelzerX Survival Core',
+            node: 'FRA-DE-02 · Frankfurt',
+            addr: '185.217.92.18:25577',
+            cpu: '62.1% / 800%',
+            mem: '18.8 / 24 GB',
+            disk: '94 / 250 GB',
+            state: 'Running',
+            colorVar: 'var(--statusOnline)',
+            icon: 'bi-cpu-fill'
+          },
+          {
+            name: 'Redis & MariaDB Cluster',
+            node: 'SIN-SG-01 · Singapore',
+            addr: '103.184.45.82:3306',
+            cpu: '11.2% / 200%',
+            mem: '3.4 / 8 GB',
+            disk: '42 / 80 GB',
+            state: 'Starting',
+            colorVar: 'var(--statusStarting)',
+            icon: 'bi-database-fill'
+          },
+          {
+            name: 'Edge Relay Worker',
+            node: 'NYC-US-01 · New York',
+            addr: '45.142.19.60:8080',
+            cpu: '0.0% / 200%',
+            mem: '0.0 / 4 GB',
+            disk: '20 / 40 GB',
+            state: 'Offline',
+            colorVar: 'var(--statusOffline)',
+            icon: 'bi-diagram-3-fill'
+          }
+        ]; %>
+
+        <% servers.forEach((srv, idx) => { %>
+          <article
+            class="hx-server-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>"
+            style="--srv-status: <%= srv.colorVar %>;"
+            onclick="openConsole(<%= idx %>)"
+          >
+            <div class="hx-status-strip"></div>
+
+            <div class="hx-srv-head">
+              <div class="hx-srv-title-wrap">
+                <div class="hx-srv-icon"><i class="bi <%= srv.icon %>"></i></div>
+                <div style="min-width:0;">
+                  <h2 class="hx-srv-name"><%= srv.name %></h2>
+                  <p class="hx-srv-node"><%= srv.node %></p>
+                </div>
+              </div>
+              <span class="hx-srv-state"><%= srv.state %></span>
+            </div>
+
+            <% if (cfg.server_list !== 'list') { %>
+              <div class="hx-srv-metrics">
+                <div class="hx-metric">
+                  <div class="hx-metric-k">CPU</div>
+                  <div class="hx-metric-v"><%= srv.cpu %></div>
+                </div>
+                <div class="hx-metric">
+                  <div class="hx-metric-k">Memory</div>
+                  <div class="hx-metric-v"><%= srv.mem %></div>
+                </div>
+                <div class="hx-metric">
+                  <div class="hx-metric-k">Disk</div>
+                  <div class="hx-metric-v"><%= srv.disk %></div>
+                </div>
+              </div>
+            <% } %>
+
+            <div class="hx-srv-foot">
+              <span><%= srv.addr %></span>
+              <span>Manage Console <i class="bi bi-arrow-right"></i></span>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    </section>
+
+    <!-- Server Console View -->
+    <section class="hx-console-view" id="server-console-view">
+      <div class="hx-console-top <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+        <div>
+          <button type="button" onclick="showServerList()" style="background:none;border:none;color:var(--pagePrimaryHover);font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;padding:0;margin-bottom:4px;">
+            <i class="bi bi-arrow-left"></i> Back to Server List
+          </button>
+          <h2 class="hx-srv-name" id="console-srv-name" style="font-size:20px;">HelzerX Velocity Proxy</h2>
+          <p class="hx-srv-node" id="console-srv-addr">185.217.92.14:25565</p>
+        </div>
+
+        <div class="hx-power-group">
+          <button type="button" class="hx-power-btn start" onclick="appendLog('[Daemon] Power signal START dispatched.')"><i class="bi bi-play-fill"></i> Start</button>
+          <button type="button" class="hx-power-btn restart" onclick="appendLog('[Daemon] Power signal RESTART dispatched.')"><i class="bi bi-arrow-clockwise"></i> Restart</button>
+          <button type="button" class="hx-power-btn stop" onclick="appendLog('[Daemon] Power signal STOP dispatched.')"><i class="bi bi-stop-fill"></i> Stop</button>
+        </div>
+      </div>
+
+      <div class="hx-terminal-box <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+        <div class="hx-terminal-log" id="terminal-log">
+          <div>[container@helzerx] Initializing Wings runtime container (24.1.0)...</div>
+          <div>[container@helzerx] Mounted NVMe volume /var/lib/pterodactyl/volumes/hx-01</div>
+          <div>[14:22:08 INFO]: Listening on 0.0.0.0:25565 (epoll transport active)</div>
+          <div>[14:22:09 INFO]: Done (1.14s)! Ready for incoming connections.</div>
+        </div>
+        <form class="hx-terminal-input-row" onsubmit="sendCommand(event)">
+          <span style="color:var(--pagePrimaryHover);font-weight:700;">&gt;</span>
+          <input type="text" class="hx-terminal-input" id="terminal-cmd" placeholder="Type a command...">
+          <button type="submit" class="hx-weblink-btn accent" style="border:none;cursor:pointer;">Send</button>
+        </form>
+      </div>
+
+      <div class="hx-graphs-grid">
+        <div class="hx-graph-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+          <div class="hx-stat-label">CPU Load History</div>
+          <svg viewBox="0 0 360 80" width="100%" height="80" preserveAspectRatio="none">
+            <polyline fill="none" stroke="var(--pagePrimaryHover)" stroke-width="2.5" points="0,58 45,52 90,46 135,51 180,34 225,38 270,29 315,32 360,24" />
+          </svg>
+        </div>
+        <div class="hx-graph-card <%= cfg.hx_3d_depth === '1' ? 'hx-3d-card' : '' %>">
+          <div class="hx-stat-label">Memory Allocation</div>
+          <svg viewBox="0 0 360 80" width="100%" height="80" preserveAspectRatio="none">
+            <polyline fill="none" stroke="var(--statusOnline)" stroke-width="2.5" points="0,44 45,44 90,40 135,42 180,38 225,37 270,35 315,36 360,34" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <% if (cfg.watermark === '1') { %>
+      <footer class="hx-footer">
+        <i class="bi bi-exclude" style="margin-right:4px;color:var(--pagePrimaryHover);"></i>
+        Powered by HelzerX 3D · Nebula v2.0-1
+      </footer>
+    <% } %>
+  </main>
+
+  <% if (cfg.hx_spotlight === '1') { %>
+    <script src="/extensions/nebula/libraries/helzerx3d.js"></script>
+  <% } %>
+
+  <script>
+    const SERVER_META = [
+      { name: 'HelzerX Velocity Proxy', addr: '185.217.92.14:25565 · FRA-DE-01' },
+      { name: 'HelzerX Survival Core', addr: '185.217.92.18:25577 · FRA-DE-02' },
+      { name: 'Redis & MariaDB Cluster', addr: '103.184.45.82:3306 · SIN-SG-01' },
+      { name: 'Edge Relay Worker', addr: '45.142.19.60:8080 · NYC-US-01' }
+    ];
+
+    function openConsole(index) {
+      const meta = SERVER_META[index] || SERVER_META[0];
+      document.getElementById('console-srv-name').textContent = meta.name;
+      document.getElementById('console-srv-addr').textContent = meta.addr;
+      document.getElementById('server-list-view').classList.add('is-hidden');
+      document.getElementById('server-console-view').classList.add('is-visible');
+      document.getElementById('nav-home').classList.remove('is-active');
+      document.getElementById('nav-console').classList.add('is-active');
+    }
+
+    function showServerList() {
+      document.getElementById('server-list-view').classList.remove('is-hidden');
+      document.getElementById('server-console-view').classList.remove('is-visible');
+      document.getElementById('nav-console').classList.remove('is-active');
+      document.getElementById('nav-home').classList.add('is-active');
+    }
+
+    function appendLog(line) {
+      const box = document.getElementById('terminal-log');
+      const div = document.createElement('div');
+      div.textContent = line;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function sendCommand(e) {
+      e.preventDefault();
+      const input = document.getElementById('terminal-cmd');
+      const val = input.value.trim();
+      if (!val) return;
+      appendLog('> ' + val);
+      input.value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (window.self !== window.top) {
+        const sc = document.getElementById('designer-shortcut');
+        if (sc) sc.style.display = 'none';
+      }
+      const alertMd = document.getElementById('alert-markdown');
+      if (alertMd && typeof marked !== 'undefined') {
+        alertMd.innerHTML = marked.parseInline(alertMd.textContent || '');
+      }
+    });
+  </script>
+</body>
+</html>
