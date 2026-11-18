@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-hx-3d="<%= cfg.hx_3d_depth %>" data-hx-spotlight="<%= cfg.hx_spotlight %>" data-hx-bevel="<%= cfg.hx_bevel_buttons %>">
 <head>
   <meta charset="utf-8">
   <title>HelzerX · Server Control Panel</title>
@@ -539,7 +539,14 @@
       transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), filter 0.16s ease;
       <% } %>
     }
-    .hx-power-btn:active { transform: translateY(2px); }
+    .hx-power-btn:not(:disabled):active { transform: translateY(2px); }
+    .hx-power-btn:disabled {
+      opacity: 0.42;
+      filter: grayscale(0.35);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
 
     <% if (cfg.server_colored_power === '1') { %>
     .hx-power-btn.start { background: var(--statusOnline); color: #070709; }
@@ -864,14 +871,17 @@
           <button type="button" onclick="showServerList()" style="background:none;border:none;color:var(--pagePrimaryHover);font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;padding:0;margin-bottom:4px;">
             <i class="bi bi-arrow-left"></i> Back to Server List
           </button>
-          <h2 class="hx-srv-name" id="console-srv-name" style="font-size:20px;">HelzerX Velocity Proxy</h2>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h2 class="hx-srv-name" id="console-srv-name" style="font-size:20px;">HelzerX Velocity Proxy</h2>
+            <span class="hx-srv-state" id="console-srv-state" style="--srv-status: var(--statusOnline);">Running</span>
+          </div>
           <p class="hx-srv-node" id="console-srv-addr">185.217.92.14:25565</p>
         </div>
 
         <div class="hx-power-group">
-          <button type="button" class="hx-power-btn start" onclick="appendLog('[Daemon] Power signal START dispatched.')"><i class="bi bi-play-fill"></i> Start</button>
-          <button type="button" class="hx-power-btn restart" onclick="appendLog('[Daemon] Power signal RESTART dispatched.')"><i class="bi bi-arrow-clockwise"></i> Restart</button>
-          <button type="button" class="hx-power-btn stop" onclick="appendLog('[Daemon] Power signal STOP dispatched.')"><i class="bi bi-stop-fill"></i> Stop</button>
+          <button type="button" id="btn-power-start" class="hx-power-btn start" onclick="sendPowerSignal('start')"><i class="bi bi-play-fill"></i> Start</button>
+          <button type="button" id="btn-power-restart" class="hx-power-btn restart" onclick="sendPowerSignal('restart')"><i class="bi bi-arrow-clockwise"></i> Restart</button>
+          <button type="button" id="btn-power-stop" class="hx-power-btn stop" onclick="sendPowerSignal('stop')"><i class="bi bi-stop-fill"></i> Stop</button>
         </div>
       </div>
 
@@ -919,16 +929,102 @@
 
   <script>
     const SERVER_META = [
-      { name: 'HelzerX Velocity Proxy', addr: '185.217.92.14:25565 · FRA-DE-01' },
-      { name: 'HelzerX Survival Core', addr: '185.217.92.18:25577 · FRA-DE-02' },
-      { name: 'Redis & MariaDB Cluster', addr: '103.184.45.82:3306 · SIN-SG-01' },
-      { name: 'Edge Relay Worker', addr: '45.142.19.60:8080 · NYC-US-01' }
+      {
+        name: 'HelzerX Velocity Proxy',
+        addr: '185.217.92.14:25565 · FRA-DE-01',
+        state: 'Running',
+        logs: [
+          '[container@helzerx] Initializing Wings runtime container (24.1.0)...',
+          '[container@helzerx] Mounted NVMe volume /var/lib/pterodactyl/volumes/hx-01',
+          '[14:22:08 INFO]: Listening on 0.0.0.0:25565 (epoll transport active)',
+          '[14:22:09 INFO]: Done (1.14s)! Ready for incoming connections.'
+        ]
+      },
+      {
+        name: 'HelzerX Survival Core',
+        addr: '185.217.92.18:25577 · FRA-DE-02',
+        state: 'Running',
+        logs: [
+          '[container@helzerx] JVM flags loaded (G1GC · 24G Heap)',
+          '[14:18:41 INFO]: Preparing level "world" (Seed: 90421883)',
+          '[14:18:45 INFO]: Done (4.21s)! For help, type "help"'
+        ]
+      },
+      {
+        name: 'Redis & MariaDB Cluster',
+        addr: '103.184.45.82:3306 · SIN-SG-01',
+        state: 'Starting',
+        logs: [
+          '[container@helzerx] Starting MariaDB 11.4 + Redis 7.2 supervisor...',
+          '[InnoDB] Initializing buffer pool (total size = 4.0G)'
+        ]
+      },
+      {
+        name: 'Edge Relay Worker',
+        addr: '45.142.19.60:8080 · NYC-US-01',
+        state: 'Offline',
+        logs: [
+          '[container@helzerx] Server marked as offline.',
+          '[Daemon] Press Start to boot container.'
+        ]
+      }
     ];
 
+    let activeServerIndex = 0;
+    let powerTimer = null;
+
+    function syncConsoleControls() {
+      const meta = SERVER_META[activeServerIndex] || SERVER_META[0];
+      const stateEl = document.getElementById('console-srv-state');
+      const startBtn = document.getElementById('btn-power-start');
+      const restartBtn = document.getElementById('btn-power-restart');
+      const stopBtn = document.getElementById('btn-power-stop');
+
+      if (stateEl) {
+        stateEl.textContent = meta.state;
+        const colorVar =
+          meta.state === 'Running' ? 'var(--statusOnline)' :
+          meta.state === 'Starting' ? 'var(--statusStarting)' :
+          'var(--statusOffline)';
+        stateEl.style.setProperty('--srv-status', colorVar);
+      }
+
+      if (startBtn) startBtn.disabled = meta.state === 'Running' || meta.state === 'Starting';
+      if (restartBtn) restartBtn.disabled = meta.state === 'Offline';
+      if (stopBtn) stopBtn.disabled = meta.state === 'Offline';
+
+      const cards = document.querySelectorAll('.hx-server-card');
+      const card = cards[activeServerIndex];
+      if (card) {
+        const colorVar =
+          meta.state === 'Running' ? 'var(--statusOnline)' :
+          meta.state === 'Starting' ? 'var(--statusStarting)' :
+          'var(--statusOffline)';
+        card.style.setProperty('--srv-status', colorVar);
+        const cardState = card.querySelector('.hx-srv-state');
+        if (cardState) cardState.textContent = meta.state;
+      }
+    }
+
+    function renderTerminalLog(lines) {
+      const box = document.getElementById('terminal-log');
+      if (!box) return;
+      box.innerHTML = '';
+      lines.forEach((line) => {
+        const div = document.createElement('div');
+        div.textContent = line;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
     function openConsole(index) {
-      const meta = SERVER_META[index] || SERVER_META[0];
+      activeServerIndex = typeof index === 'number' && SERVER_META[index] ? index : 0;
+      const meta = SERVER_META[activeServerIndex];
       document.getElementById('console-srv-name').textContent = meta.name;
       document.getElementById('console-srv-addr').textContent = meta.addr;
+      renderTerminalLog(meta.logs);
+      syncConsoleControls();
       document.getElementById('server-list-view').classList.add('is-hidden');
       document.getElementById('server-console-view').classList.add('is-visible');
       document.getElementById('nav-home').classList.remove('is-active');
@@ -943,11 +1039,49 @@
     }
 
     function appendLog(line) {
+      const meta = SERVER_META[activeServerIndex];
+      if (meta) meta.logs.push(line);
       const box = document.getElementById('terminal-log');
       const div = document.createElement('div');
       div.textContent = line;
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
+    }
+
+    function sendPowerSignal(action) {
+      const meta = SERVER_META[activeServerIndex];
+      if (!meta) return;
+      if (powerTimer) {
+        clearTimeout(powerTimer);
+        powerTimer = null;
+      }
+
+      if (action === 'start') {
+        meta.state = 'Starting';
+        syncConsoleControls();
+        appendLog('[Daemon] Power signal START dispatched.');
+        appendLog('[container@helzerx] Pulling runtime image & starting process...');
+        powerTimer = setTimeout(() => {
+          meta.state = 'Running';
+          syncConsoleControls();
+          appendLog('[container@helzerx] Server marked as running.');
+        }, 900);
+      } else if (action === 'restart') {
+        meta.state = 'Starting';
+        syncConsoleControls();
+        appendLog('[Daemon] Power signal RESTART dispatched.');
+        appendLog('[container@helzerx] Gracefully stopping container...');
+        powerTimer = setTimeout(() => {
+          meta.state = 'Running';
+          syncConsoleControls();
+          appendLog('[container@helzerx] Container restarted and online.');
+        }, 1000);
+      } else if (action === 'stop') {
+        meta.state = 'Offline';
+        syncConsoleControls();
+        appendLog('[Daemon] Power signal STOP dispatched.');
+        appendLog('[container@helzerx] Server marked as offline.');
+      }
     }
 
     function sendCommand(e) {
@@ -957,6 +1091,20 @@
       if (!val) return;
       appendLog('> ' + val);
       input.value = '';
+
+      const lower = val.toLowerCase();
+      if (lower === 'help') {
+        appendLog('[Daemon] Available commands: help, status, stop, restart, version');
+      } else if (lower === 'status') {
+        const meta = SERVER_META[activeServerIndex];
+        appendLog('[Daemon] State: ' + (meta ? meta.state : 'Unknown') + ' · Wings 24.1.0');
+      } else if (lower === 'stop') {
+        sendPowerSignal('stop');
+      } else if (lower === 'restart') {
+        sendPowerSignal('restart');
+      } else if (lower === 'version') {
+        appendLog('[Daemon] HelzerX Runtime · Pterodactyl Wings 1.11.13');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', function () {

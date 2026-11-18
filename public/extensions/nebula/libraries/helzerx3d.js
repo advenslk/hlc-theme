@@ -6,7 +6,6 @@
     '.hx-3d-card',
     '.bento-card',
     '.ServerRow__StatusIndicatorBox-sc-1ibsw91-2',
-    '.TitledGreyBox___StyledDiv-sc-gvsoy-0',
     '.option-radio > img'
   ].join(',');
 
